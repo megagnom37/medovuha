@@ -18,20 +18,19 @@ public class PlayController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        // Обработать передвижение
+        // РћР±СЂР°Р±РѕС‚Р°С‚СЊ РїРµСЂРµРґРІРёР¶РµРЅРёРµ
         Move();
     }
 
-    // Обработка перемещения
+    // РћР±СЂР°Р±РѕС‚РєР° РїРµСЂРµРјРµС‰РµРЅРёСЏ
     void Move()
     {
-        // TODO: Исправить ускорение при движении по диагонали
         Vector3 newPos = Vector3.zero;
         if (Input.GetKey(KeyCode.W))
         {
@@ -80,7 +79,7 @@ public class PlayController : MonoBehaviour
 
     //    if ((movingJoystick.Vertical != 0.0f) || (movingJoystick.Horizontal != 0.0f))
     //    {
-    //        // Обработка передвижения
+    //        // РћР±СЂР°Р±РѕС‚РєР° РїРµСЂРµРґРІРёР¶РµРЅРёСЏ
     //        Vector3 moveDirection = Vector3.forward * movingJoystick.Vertical + Vector3.right * movingJoystick.Horizontal;
     //        moveDirection = Vector3.Normalize(moveDirection) * moveSpeed * Time.deltaTime;
     //        transform.Translate(moveDirection, Space.World);
