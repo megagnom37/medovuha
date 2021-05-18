@@ -13,6 +13,8 @@ public class PlayController : MonoBehaviour
 
     private bool isGround = true;
 
+    public int playerID = 0;
+
     // Start is called before the first frame update
     void Start()
     {

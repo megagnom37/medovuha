@@ -18,22 +18,21 @@ def handle_data(data, from_address):
     player_id, x, y, z = data.decode().split(':')
     print(f'\tPlayer: {player_id} ({x}, {y}, {z})')
     cli_addr.add(from_address)
-    cli_data[from_address] = (player_id, x, y, z)
+    cli_data[from_address] = f'({player_id}:{x}:{y}:{z})'
 
 def send_data_to_clients():
     while True:
-        resp = pickle.dumps(cli_data)
+        resp = ';'.join(cli_data.values()).encode()
         for client in cli_addr:
             sock.sendto(resp, client)
         time.sleep(2)
 
 def wait_for_client():
     print('Start Server...')
-    # print('Start Send Tread...')
-    # c_thread = threading.Thread(target=send_data_to_clients,
-    #                             args=tuple())
-    # c_thread.daemon = True
-    # c_thread.start()
+    c_thread = threading.Thread(target=send_data_to_clients,
+                                args=tuple())
+    c_thread.daemon = True
+    c_thread.start()
 
     try:
         while True:

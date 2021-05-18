@@ -15,10 +15,20 @@ public class UDPSend : MonoBehaviour
     IPEndPoint remoteEndPoint;
     UdpClient client;
 
+    public GameObject recieverUDPPrefab;
+
     void Start()
     {
         init();
+        createRecieverUPD();
         StartCoroutine("SendPosition");
+    }
+
+    void createRecieverUPD()
+    {
+        UDPReceive recieverUDP = Instantiate(recieverUDPPrefab).GetComponent<UDPReceive>();
+        sendString($"{playerID}:0:0:0");
+        recieverUDP.port = ((IPEndPoint)client.Client.LocalEndPoint).Port;
     }
 
     IEnumerator SendPosition()
