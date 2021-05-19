@@ -49,7 +49,7 @@ public class PlayController : MonoBehaviour
             newPos += Vector3.right;
         }
         newPos = Vector3.Normalize(newPos) * moveSpeed * Time.deltaTime;
-        transform.Translate(newPos, Space.World);
+        transform.Translate(newPos, Space.Self);
 
         if (Input.GetKey(KeyCode.Space))
         {

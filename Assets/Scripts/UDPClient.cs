@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 using System;
 using System.Text;
@@ -12,27 +13,39 @@ public class UDPClient : MonoBehaviour
     public string IP = "127.0.0.1";
     public int port = 9999;
     public PlayController player;
+    public Enemy[] enemys;
 
     Thread receiveThread;
+    Thread sendThread;
     IPEndPoint remoteEndPoint;
     UdpClient client;
 
+    Dictionary<int, Vector3> enemysData;
+
     void Start()
     {
+        enemysData = new Dictionary<int, Vector3>();
         init();
-        StartCoroutine("SendPosition");
+    }
+
+    private void Update()
+    {
+        SendPosition();
+        updateEnemys();
     }
 
     public void init()
     {
         remoteEndPoint = new IPEndPoint(IPAddress.Parse(IP), port);
         client = new UdpClient();
-        sendString($"{player.playerID}:0:0:0");
+        //sendString($"{player.playerID}:0:0:0");
 
         receiveThread = new Thread(
             new ThreadStart(ReceiveData));
         receiveThread.IsBackground = true;
         receiveThread.Start();
+
+        //StartCoroutine("SendPosition");
     }
 
     private void ReceiveData()
@@ -43,9 +56,8 @@ public class UDPClient : MonoBehaviour
             try
             {
                 IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
-                byte[] data = client.Receive(ref anyIP);
-                string text = Encoding.UTF8.GetString(data);
-                print(">> " + text);
+                byte[] dataBytes = client.Receive(ref anyIP);
+                updateEnemysData(dataBytes);
             }
             catch (Exception err)
             {
@@ -54,15 +66,51 @@ public class UDPClient : MonoBehaviour
         }
     }
 
-    IEnumerator SendPosition()
+    void updateEnemysData(byte[] data)
     {
-        while (true)
+        string rowDataStr = Encoding.UTF8.GetString(data);
+        string[] playersDataStr = rowDataStr.Split(';');
+        foreach (var playerDataStr in playersDataStr)
         {
-            Vector3 pos = player.transform.position;
-            string udpMessageStr = $"{player.playerID}:{pos.x}:{pos.y}:{pos.z}";
-            sendString(udpMessageStr);
-            yield return new WaitForSeconds(2f);
+            string[] player_info = playerDataStr.Split(':');
+            int playerId = Int32.Parse(player_info[0]);
+            if (playerId == player.playerID)
+            {
+                continue;
+            }
+            enemysData[playerId] = new Vector3(float.Parse(player_info[1]),
+                                               float.Parse(player_info[2]),
+                                               float.Parse(player_info[3]));
         }
+    }
+
+    void updateEnemys()
+    {
+        foreach (var enemy in enemys)
+        {
+            if (enemysData.ContainsKey(enemy.playerID))
+            {
+                enemy.Move(enemysData[enemy.playerID]);
+            } 
+        }
+    }
+
+    //IEnumerator SendPosition()
+    //{
+    //    while (true)
+    //    {
+    //        Vector3 pos = player.transform.position;
+    //        string udpMessageStr = $"{player.playerID}:{pos.x}:{pos.y}:{pos.z}";
+    //        sendString(udpMessageStr);
+    //        yield return new WaitForSeconds(0.1f);
+    //    }
+    //}
+
+    void SendPosition()
+    {
+        Vector3 pos = player.transform.position;
+        string udpMessageStr = $"{player.playerID}:{pos.x}:{pos.y}:{pos.z}";
+        sendString(udpMessageStr);
     }
 
     private void sendString(string message)

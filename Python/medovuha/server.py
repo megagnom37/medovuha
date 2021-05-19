@@ -16,16 +16,17 @@ cli_data = dict()
 
 def handle_data(data, from_address):
     player_id, x, y, z = data.decode().split(':')
-    print(f'\tPlayer: {player_id} ({x}, {y}, {z})')
+    # print(f'\tPlayer: {player_id} ({x}, {y}, {z})')
     cli_addr.add(from_address)
-    cli_data[from_address] = f'({player_id}:{x}:{y}:{z})'
+    cli_data[from_address] = f'{player_id}:{x}:{y}:{z}'
 
 def send_data_to_clients():
+    time.sleep(10.)
     while True:
         resp = ';'.join(cli_data.values()).encode()
         for client in cli_addr:
             sock.sendto(resp, client)
-        time.sleep(2)
+        # time.sleep(0.1)
 
 def wait_for_client():
     print('Start Server...')
@@ -38,7 +39,7 @@ def wait_for_client():
         while True:
             try:
                 data, client_address = sock.recvfrom(1024)
-                print(f'{client_address} recived')
+                # print(f'{client_address} recived')
 
                 handle_data(data, client_address)
             except socket.timeout:
