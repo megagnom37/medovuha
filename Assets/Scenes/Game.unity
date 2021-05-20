@@ -377,8 +377,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53326d8aecc3a1b42a9d09acab3fe314, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IP: 127.0.0.1
-  port: 9999
   player: {fileID: 449820915}
   enemys:
   - {fileID: 1688252471}
@@ -543,7 +541,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 449820909}
   m_LocalRotation: {x: -0, y: 0.7165078, z: -0, w: 0.6975791}
-  m_LocalPosition: {x: 0.19100986, y: 1.53, z: 5}
+  m_LocalPosition: {x: -0.25, y: 1.53, z: -1.21}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -564,7 +562,6 @@ MonoBehaviour:
   moveSpeed: 3.5
   jumpForce: 250
   rotateDelay: 1
-  playerID: 0
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1201,7 +1198,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1688252470}
   m_LocalRotation: {x: -0, y: 0.0032871505, z: -0, w: 0.99999464}
-  m_LocalPosition: {x: 0.095878206, y: 1.53, z: -1}
+  m_LocalPosition: {x: -0.13, y: 1.53, z: 4.73}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

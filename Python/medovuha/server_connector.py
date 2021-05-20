@@ -14,6 +14,9 @@ class ServerConnector:
         self._app = web.Application()
         self._server = None
 
+        self.host = '127.0.0.1'
+        self.port = 9999
+
     def start(self):
         self._app.add_routes([web.post('/server_connector/connect', self.connect)])
         web.run_app(self._app)
@@ -30,14 +33,16 @@ class ServerConnector:
         # data = await request.json()
 
         if not self._server:
-            host = '127.0.0.1'
-            port = self._find_free_port()
+            # host = '127.0.0.1'
+            # port = self._find_free_port()
             # TODO: Set host and port for server
             subprocess.Popen(["python", "./server.py"])
+            self._server = True
+
 
         response_data = {
-            'host': host,
-            'port': port
+            'host': self.host,
+            'port': self.port
         }
 
         return web.json_response(response_data)

@@ -10,9 +10,10 @@ using System.Threading;
 
 public class UDPClient : MonoBehaviour
 {
-    public string IP = "127.0.0.1";
-    public int port = 9999;
+    string IP;
+    int port;
     public PlayController player;
+    int playerID = 0;
     public Enemy[] enemys;
 
     Thread receiveThread;
@@ -21,10 +22,17 @@ public class UDPClient : MonoBehaviour
     UdpClient client;
 
     Dictionary<int, Vector3> enemysData;
+    GameController gameCtrl;
 
     void Start()
     {
         enemysData = new Dictionary<int, Vector3>();
+
+        gameCtrl = GameObject.FindObjectOfType<GameController>();
+        IP = gameCtrl.serverIp;
+        port = gameCtrl.serverPort;
+        playerID = gameCtrl.playerID;
+
         init();
     }
 
@@ -38,14 +46,11 @@ public class UDPClient : MonoBehaviour
     {
         remoteEndPoint = new IPEndPoint(IPAddress.Parse(IP), port);
         client = new UdpClient();
-        //sendString($"{player.playerID}:0:0:0");
 
         receiveThread = new Thread(
             new ThreadStart(ReceiveData));
         receiveThread.IsBackground = true;
         receiveThread.Start();
-
-        //StartCoroutine("SendPosition");
     }
 
     private void ReceiveData()
@@ -74,7 +79,7 @@ public class UDPClient : MonoBehaviour
         {
             string[] player_info = playerDataStr.Split(':');
             int playerId = Int32.Parse(player_info[0]);
-            if (playerId == player.playerID)
+            if (playerId == playerID)
             {
                 continue;
             }
@@ -95,21 +100,10 @@ public class UDPClient : MonoBehaviour
         }
     }
 
-    //IEnumerator SendPosition()
-    //{
-    //    while (true)
-    //    {
-    //        Vector3 pos = player.transform.position;
-    //        string udpMessageStr = $"{player.playerID}:{pos.x}:{pos.y}:{pos.z}";
-    //        sendString(udpMessageStr);
-    //        yield return new WaitForSeconds(0.1f);
-    //    }
-    //}
-
     void SendPosition()
     {
         Vector3 pos = player.transform.position;
-        string udpMessageStr = $"{player.playerID}:{pos.x}:{pos.y}:{pos.z}";
+        string udpMessageStr = $"{playerID}:{pos.x}:{pos.y}:{pos.z}";
         sendString(udpMessageStr);
     }
 
@@ -125,5 +119,4 @@ public class UDPClient : MonoBehaviour
             print(err.ToString());
         }
     }
-    
 }

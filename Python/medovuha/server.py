@@ -22,14 +22,14 @@ class Server:
     def get_server_url(self):
         return self._host, self._port
 
-    def handle_data(data, from_address):
+    def handle_data(self, data, from_address):
         player_id, x, y, z = data.decode().split(':')
-        # print(f'\tPlayer: {player_id} ({x}, {y}, {z})')
+        print(f'\tPlayer: {player_id} ({x}, {y}, {z})')
         self._cli_addr.add(from_address)
         self._cli_data[from_address] = f'{player_id}:{x}:{y}:{z}'
 
     def _send_data_to_clients(self):
-        time.sleep(10.)
+        time.sleep(5.)
         while True:
             resp = ';'.join(self._cli_data.values()).encode()
             for client in self._cli_addr:
@@ -49,7 +49,7 @@ class Server:
                     data, client_address = self._sock.recvfrom(1024)
                     # print(f'{client_address} recived')
 
-                    handle_data(data, client_address)
+                    self.handle_data(data, client_address)
                 except socket.timeout:
                     pass
         except KeyboardInterrupt:

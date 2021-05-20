@@ -13,8 +13,6 @@ public class PlayController : MonoBehaviour
 
     private bool isGround = true;
 
-    public int playerID = 0;
-
     // Start is called before the first frame update
     void Start()
     {
@@ -59,7 +57,7 @@ public class PlayController : MonoBehaviour
                 Vector3 jumpVector = Vector3.up * jumpForce;
                 transform.GetComponent<Rigidbody>().AddForce(jumpVector, ForceMode.Impulse);
                 isGround = false;
-                print("isGround: " + isGround.ToString());
+                //print("isGround: " + isGround.ToString());
             }
         }
     }
