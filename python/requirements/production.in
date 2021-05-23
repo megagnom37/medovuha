@@ -1,0 +1,9 @@
+cock >= 0.8.0
+facet >= 0.6.0
+fastapi
+giveme
+httpx
+hypercorn
+janus
+loguru
+yarl
