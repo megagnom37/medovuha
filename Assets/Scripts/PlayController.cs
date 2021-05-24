@@ -11,7 +11,8 @@ public class PlayController : MonoBehaviour
     [Header("Rotating")]
     public float rotateDelay = 1;
 
-    private bool isGround = true;
+    public bool isGround = true;
+    public bool inJump = false;
 
     // Start is called before the first frame update
     void Start()
@@ -49,17 +50,24 @@ public class PlayController : MonoBehaviour
         newPos = Vector3.Normalize(newPos) * moveSpeed * Time.deltaTime;
         transform.Translate(newPos, Space.Self);
 
-        if (Input.GetKey(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && !inJump)
         {
-
             if (isGround)
             {
                 Vector3 jumpVector = Vector3.up * jumpForce;
                 transform.GetComponent<Rigidbody>().AddForce(jumpVector, ForceMode.Impulse);
                 isGround = false;
-                //print("isGround: " + isGround.ToString());
+                inJump = true;
+                StartCoroutine("JumpHandler");
             }
         }
+    }
+
+    IEnumerator JumpHandler()
+    {
+        yield return new WaitForSeconds(0.1f);
+        inJump = false;
+        isGround = false;
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -69,6 +77,8 @@ public class PlayController : MonoBehaviour
             isGround = true;
         }
     }
+
+
 
 
 
