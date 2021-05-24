@@ -1,16 +1,9 @@
 from facet import ServiceMixin
 
-from pydantic import BaseModel
-
 from medovuha.web import WebServer
 from medovuha.udp import UdpServer
 from medovuha.injector import inject
-
-
-class GameInfo(BaseModel):
-    game_id: str
-    host: str
-    port: str
+from medovuha.state import GameInfo
 
 
 class MedovuhaService(ServiceMixin):
