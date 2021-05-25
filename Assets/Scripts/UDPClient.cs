@@ -10,6 +10,7 @@ using System.Threading;
 
 public class UDPClient : MonoBehaviour
 {
+    int gameId;
     string IP;
     int port;
     public PlayController player;
@@ -29,6 +30,8 @@ public class UDPClient : MonoBehaviour
         enemysData = new Dictionary<int, Vector3>();
 
         gameCtrl = GameObject.FindObjectOfType<GameController>();
+        
+        gameId = gameCtrl.serverGameId;
         IP = gameCtrl.serverIp;
         port = gameCtrl.serverPort;
         playerID = gameCtrl.playerID;

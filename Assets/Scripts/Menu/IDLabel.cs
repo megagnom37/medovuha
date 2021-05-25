@@ -5,15 +5,15 @@ using UnityEngine.UI;
 
 public class IDLabel : MonoBehaviour
 {
-    // Start is called before the first frame update
+    private Text id_text;
+
     void Start()
     {
-        GetComponent<Text>().text = FindObjectOfType<GameController>().playerID.ToString();
+        id_text = GetComponent<Text>();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void ChangedID(string text)
     {
-        
+        FindObjectOfType<GameController>().playerID = int.Parse(id_text.text);
     }
 }

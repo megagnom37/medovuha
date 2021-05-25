@@ -7,10 +7,17 @@ using UnityEngine.Networking;
 public class MenuController : MonoBehaviour
 {
     [System.Serializable]
-    public class ServerUrl
+    public class ServerInfo
     {
+        public int game_id;
         public string host;
         public int port;       
+    }
+
+    [System.Serializable]
+    public class PlayerConnectInfo
+    {
+        public int player_id;
     }
 
     public GameController gameCtrl;
@@ -32,7 +39,10 @@ public class MenuController : MonoBehaviour
     }
     IEnumerator PostRequest(string uri)
     {
-        using (UnityWebRequest webRequest = UnityWebRequest.Post(uri, ""))
+        PlayerConnectInfo postData = new PlayerConnectInfo();
+        postData.player_id = gameCtrl.playerID;
+
+        using (UnityWebRequest webRequest = UnityWebRequest.Post(uri, JsonUtility.ToJson(postData)))
         {
             yield return webRequest.SendWebRequest();
 
@@ -50,12 +60,11 @@ public class MenuController : MonoBehaviour
                     break;
                 case UnityWebRequest.Result.Success:
                     Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
-                    ServerUrl serverUrl = JsonUtility.FromJson<ServerUrl>(webRequest.downloadHandler.text);
-                    gameCtrl.connectToServer(serverUrl.host, 9999); //TODO: set normal port
+                    ServerInfo serverInfo = JsonUtility.FromJson<ServerInfo>(webRequest.downloadHandler.text);
+                    gameCtrl.connectToServer(serverInfo);
                     
                     break;
             }
         }
     }
-
 }
