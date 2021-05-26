@@ -4,10 +4,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
-{
+{ 
     public int playerID;
     public string serverIp;
     public int serverPort;
+    public int serverGameId;
 
     void Awake()
     {
@@ -24,10 +25,11 @@ public class GameController : MonoBehaviour
         
     }
 
-    public void connectToServer(string ip, int port)
+    public void connectToServer(MenuController.ServerInfo serverInfo)
     {
-        serverIp = ip;
-        serverPort = port;
+        serverGameId = serverInfo.game_id;
+        serverIp = serverInfo.host;
+        serverPort = serverInfo.port;
         SceneManager.LoadScene("Game");
     }
 }
