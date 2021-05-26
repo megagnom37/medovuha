@@ -10,55 +10,92 @@ using System.Threading;
 
 public class UDPClient : MonoBehaviour
 {
-    int gameId;
-    string IP;
-    int port;
+    [System.Serializable]
+    public class Position
+    {
+        public float x;
+        public float y;
+        public float z;
+    }
+
+    [System.Serializable]
+    public class PlayerGameInfo
+    {
+        public int game_id;
+        public int player_id;
+        public Position position;
+    }
+
+    [System.Serializable]
+    public class EnemyInfo
+    {
+        public int enemy_id;
+        public Position position;
+    }
+
+    [System.Serializable]
+    public class ServerData
+    {
+        public string status;
+        public EnemyInfo[] enemys;
+    }
+
+    private int game_id;
+    private string host;
+    private int port;
+    private int player_id;
+
+    private string server_status;
+
+    private Dictionary<int, Enemy> enemys;
+    private Dictionary<int, Vector3> enemys_data;
+
+    private Thread receive_thread;
+    private IPEndPoint remote_end_point;
+    private UdpClient client;
+
     public PlayController player;
-    int playerID = 0;
-    public Enemy[] enemys;
-
-    Thread receiveThread;
-    Thread sendThread;
-    IPEndPoint remoteEndPoint;
-    UdpClient client;
-
-    Dictionary<int, Vector3> enemysData;
-    GameController gameCtrl;
+    public GameObject enemy_prefab;
 
     void Start()
     {
-        enemysData = new Dictionary<int, Vector3>();
+        enemys_data = new Dictionary<int, Vector3>();
+        enemys = new Dictionary<int, Enemy>();
 
-        gameCtrl = GameObject.FindObjectOfType<GameController>();
-        
-        gameId = gameCtrl.serverGameId;
-        IP = gameCtrl.serverIp;
-        port = gameCtrl.serverPort;
-        playerID = gameCtrl.playerID;
+        server_status = "waiting";
 
-        init();
+        ProcessGameControllerData();
+        InitUdpClient();
     }
 
     private void Update()
     {
-        SendPosition();
+        SendPlayerInfo();
         updateEnemys();
     }
 
-    public void init()
+    private void ProcessGameControllerData()
     {
-        remoteEndPoint = new IPEndPoint(IPAddress.Parse(IP), port);
+        GameController game_crtl = GameObject.FindObjectOfType<GameController>();
+        game_id = game_crtl.serverGameId;
+        host = game_crtl.serverIp;
+        port = game_crtl.serverPort;
+        player_id = game_crtl.playerID;
+    }
+
+    public void InitUdpClient()
+    {
+        remote_end_point = new IPEndPoint(IPAddress.Parse(host), port);
         client = new UdpClient();
 
-        receiveThread = new Thread(
+        receive_thread = new Thread(
             new ThreadStart(ReceiveData));
-        receiveThread.IsBackground = true;
-        receiveThread.Start();
+        receive_thread.IsBackground = true;
+        receive_thread.Start();
     }
 
     private void ReceiveData()
     {
-        print("Recieve Started");
         while (true)
         {
             try
@@ -76,46 +113,60 @@ public class UDPClient : MonoBehaviour
 
     void updateEnemysData(byte[] data)
     {
-        string rowDataStr = Encoding.UTF8.GetString(data);
-        string[] playersDataStr = rowDataStr.Split(';');
-        foreach (var playerDataStr in playersDataStr)
+        string row_data_str = Encoding.UTF8.GetString(data);
+        ServerData server_data = JsonUtility.FromJson<ServerData>(row_data_str);
+        server_status = server_data.status;
+
+        foreach (var enemy_info in server_data.enemys)
         {
-            string[] player_info = playerDataStr.Split(':');
-            int playerId = Int32.Parse(player_info[0]);
-            if (playerId == playerID)
+            if (enemy_info.enemy_id == player_id)
             {
                 continue;
             }
-            enemysData[playerId] = new Vector3(float.Parse(player_info[1]),
-                                               float.Parse(player_info[2]),
-                                               float.Parse(player_info[3]));
+            enemys_data[enemy_info.enemy_id] = new Vector3(enemy_info.position.x,
+                                                           enemy_info.position.y,
+                                                           enemy_info.position.z);
+        }
+
+        if (server_status == "waiting")
+        {
+            foreach (KeyValuePair<int, Vector3> enemy_info in enemys_data)
+            {
+                if (!enemys.ContainsKey(enemy_info.Key))
+                {
+                    GameObject enemy_object = Instantiate(enemy_prefab, enemy_info.Value, Quaternion.identity);
+                    enemys[enemy_info.Key] = enemy_object.GetComponent<Enemy>();
+                }
+            }
         }
     }
 
     void updateEnemys()
     {
-        foreach (var enemy in enemys)
+        if (server_status == "running")
         {
-            if (enemysData.ContainsKey(enemy.playerID))
+            foreach (KeyValuePair<int, Enemy> enemy in enemys)
             {
-                enemy.Move(enemysData[enemy.playerID]);
-            } 
+                enemy.Value.Move(enemys_data[enemy.Key]);
+            }
         }
     }
 
-    void SendPosition()
+    void SendPlayerInfo()
     {
         Vector3 pos = player.transform.position;
-        string udpMessageStr = $"{playerID}:{pos.x}:{pos.y}:{pos.z}";
-        sendString(udpMessageStr);
-    }
+        PlayerGameInfo player_info = new PlayerGameInfo();
+        player_info.player_id = player_id;
+        player_info.game_id = game_id;
+        player_info.position = new Position();
+        player_info.position.x = pos.x;
+        player_info.position.y = pos.y;
+        player_info.position.z = pos.z;
 
-    private void sendString(string message)
-    {
         try
         {
-            byte[] data = Encoding.UTF8.GetBytes(message);
-            client.Send(data, data.Length, remoteEndPoint);
+            byte[] data = Encoding.UTF8.GetBytes(JsonUtility.ToJson(player_info));
+            client.Send(data, data.Length, remote_end_point);
         }
         catch (Exception err)
         {

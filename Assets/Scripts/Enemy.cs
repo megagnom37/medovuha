@@ -11,8 +11,6 @@ public class Enemy : MonoBehaviour
     [Header("Rotating")]
     public float rotateDelay = 1;
 
-    public int playerID = 0;
-
     public void Move(Vector3 newPos)
     {
         transform.position = newPos;
