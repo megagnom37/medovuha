@@ -25,7 +25,7 @@ public class GameController : MonoBehaviour
         
     }
 
-    public void connectToServer(MenuController.ServerInfo serverInfo)
+    public void connectToServer(ConnectHTTPServerInfo serverInfo)
     {
         serverGameId = serverInfo.game_id;
         serverIp = serverInfo.host;

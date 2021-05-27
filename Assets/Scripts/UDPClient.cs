@@ -10,36 +10,6 @@ using System.Threading;
 
 public class UDPClient : MonoBehaviour
 {
-    [System.Serializable]
-    public class Position
-    {
-        public float x;
-        public float y;
-        public float z;
-    }
-
-    [System.Serializable]
-    public class PlayerGameInfo
-    {
-        public int game_id;
-        public int player_id;
-        public Position position;
-    }
-
-    [System.Serializable]
-    public class EnemyInfo
-    {
-        public int enemy_id;
-        public Position position;
-    }
-
-    [System.Serializable]
-    public class ServerData
-    {
-        public string status;
-        public EnemyInfo[] enemys;
-    }
-
     private int game_id;
     private string host;
     private int port;
@@ -155,18 +125,13 @@ public class UDPClient : MonoBehaviour
     void SendPlayerInfo()
     {
         Vector3 pos = player.transform.position;
-        PlayerGameInfo player_info = new PlayerGameInfo();
-        player_info.player_id = player_id;
-        player_info.game_id = game_id;
-        player_info.position = new Position();
-        player_info.position.x = pos.x;
-        player_info.position.y = pos.y;
-        player_info.position.z = pos.z;
+        PlayerData player_data = new PlayerData(
+            game_id, player_id, new Position(pos.x, pos.y, pos.z));
+        byte[] bytes_to_send = Encoding.UTF8.GetBytes(JsonUtility.ToJson(player_data));
 
         try
         {
-            byte[] data = Encoding.UTF8.GetBytes(JsonUtility.ToJson(player_info));
-            client.Send(data, data.Length, remote_end_point);
+            client.Send(bytes_to_send, bytes_to_send.Length, remote_end_point);
         }
         catch (Exception err)
         {
