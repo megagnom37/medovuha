@@ -1,10 +1,15 @@
 import asyncio
-import json
-from uuid import uuid4
-
-from medovuha.injector import inject, register
+import time
+from uuid import UUID
+from typing import Optional, Dict, Any
 
 from facet import ServiceMixin
+from fastapi.encoders import jsonable_encoder
+from loguru import logger
+from pydantic import BaseModel, ValidationError, validator
+
+from medovuha.injector import inject, register
+from medovuha.state import GameState
 
 
 class UdpProtocol(asyncio.DatagramProtocol):
@@ -77,44 +82,88 @@ class UdpSocket:
         return await self.receive()
 
 
+class JsonRpcRequest(BaseModel):
+    method: str
+    params: dict
+    jsonrpc: str = "2.0"
+    id: Optional[str] = None
+
+    @validator("jsonrpc")
+    def version_match(cls, v):
+        if v != "2.0":
+            raise ValidationError(f"Json rpc version must be '2.0', got {v}")
+        return v
+
+
+class BaseParams(BaseModel):
+    game_id: UUID
+    player_id: UUID
+
+
 class UdpServer(ServiceMixin):
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, tickrate):
         self.host = host
         self.port = port
-        self.address_by_game_id = {}
+        self.tick_interval = 1 / tickrate
+        self.last_tick_start = None
         self.socket = None
+        self.games: Dict[UUID, GameState] = {}
+        self.players_address: Dict[UUID, Any] = {}
 
     async def start(self):
         self.socket = UdpSocket(local_address=(self.host, self.port))
         await self.socket.initialize()
         self.add_task(self.listen())
+        self.add_task(self.send_state())
 
     async def stop(self):
         await self.socket.close()
 
     async def listen(self):
         async for data, address in self.socket:
-            # TODO: use pydantic to declare packet format
-            parsed_data = json.loads(data)
-            game_id = parsed_data["game_id"]
-            if game_id not in self.address_by_game_id:  # unknown game
+            logger.debug("Received from {}: {}", address, data)
+            try:
+                request = JsonRpcRequest.parse_raw(data)
+                base_params = BaseParams.parse_obj(request.params)
+            except ValidationError:
+                logger.exception("Bad request")
+                continue
+            if base_params.game_id not in self.games:
+                logger.info("Game with id {} do not exist", base_params.game_id)
                 continue  # TODO: response with "no such game"
-            for address in self.address_by_game_id[game_id]:
-                # TODO: repack data, so no sensitive information will reach another user
-                await self.socket.send(data, address)  # this is ok, since `send` implementation have not `awaits`
+            self.players_address[base_params.player_id] = address
+            self.games[base_params.game_id].dispatch(request.method, request.params)
+            # TODO: add response maybe
 
-    def create_game(self):
-        return str(uuid4())
+    async def send_state(self):
+        while True:
+            now = time.perf_counter()
+            if self.last_tick_start is not None:
+                need_to_sleep = max(0, self.last_tick_start + self.tick_interval - now)
+                await asyncio.sleep(need_to_sleep)
+                now += need_to_sleep
+            self.last_tick_start = now
+            for state in self.games.values():
+                rpc_request = JsonRpcRequest(method="update_state", params=jsonable_encoder(state))
+                data = rpc_request.json()
+                for player in state.players.values():
+                    address = self.players_address.get(player.player_id)
+                    if not address:
+                        continue
+                    await self.socket.send(data, address)
 
-    def remove_game(self, game_id: str):
-        self.address_by_game_id.pop(game_id)
+    def create_game(self) -> GameState:
+        state = GameState.from_address(self.host, self.port)
+        self.games[state.info.game_id] = state
+        return state
 
 
 @register(name="udp_server", singleton=True)
 @inject
-def create_udp_server(config):
+def udp_server_from_config(config):
     return UdpServer(
         host=config["udp_host"],
         port=config["udp_port"],
+        tickrate=config["udp_tickrate"],
     )

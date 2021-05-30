@@ -3,3 +3,6 @@ source =
     medovuha
 [report]
 show_missing = True
+omit =
+    medovuha/__main__.py
+    medovuha/options.py
