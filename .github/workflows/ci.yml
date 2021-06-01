@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - working-directory: python
-      - run: |
+        run: |
           pip install flake8
           flake8
 
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - working-directory: python
-      - run: |
+        run: |
           pip install -e ./[dev]
           pytest
 
