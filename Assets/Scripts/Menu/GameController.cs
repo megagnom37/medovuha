@@ -5,10 +5,10 @@ using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 { 
-    public int playerID;
+    public string playerID;
     public string serverIp;
     public int serverPort;
-    public int serverGameId;
+    public string serverGameId;
 
     void Awake()
     {
