@@ -14,6 +14,6 @@ public class IDLabel : MonoBehaviour
 
     public void ChangedID(string text)
     {
-        FindObjectOfType<GameController>().playerID = int.Parse(id_text.text);
+        FindObjectOfType<GameController>().playerID = id_text.text;
     }
 }

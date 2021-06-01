@@ -6,20 +6,6 @@ using UnityEngine.Networking;
 
 public class MenuController : MonoBehaviour
 {
-    [System.Serializable]
-    public class ServerInfo
-    {
-        public int game_id;
-        public string host;
-        public int port;       
-    }
-
-    [System.Serializable]
-    public class PlayerConnectInfo
-    {
-        public int player_id;
-    }
-
     public GameController gameCtrl;
     
 
@@ -35,14 +21,13 @@ public class MenuController : MonoBehaviour
 
     public void ClickPlayButton()
     {
-        StartCoroutine(PostRequest("http://127.0.0.1:8080/server_connector/connect"));
+        StartCoroutine(GetRequest("http://127.0.0.1:8080/get_game"));
     }
-    IEnumerator PostRequest(string uri)
+    IEnumerator GetRequest(string uri)
     {
-        PlayerConnectInfo postData = new PlayerConnectInfo();
-        postData.player_id = gameCtrl.playerID;
+        //ConnectHTTPPlayerInfo postData = new ConnectHTTPPlayerInfo(gameCtrl.playerID);
 
-        using (UnityWebRequest webRequest = UnityWebRequest.Post(uri, JsonUtility.ToJson(postData)))
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
         {
             yield return webRequest.SendWebRequest();
 
@@ -60,7 +45,8 @@ public class MenuController : MonoBehaviour
                     break;
                 case UnityWebRequest.Result.Success:
                     Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
-                    ServerInfo serverInfo = JsonUtility.FromJson<ServerInfo>(webRequest.downloadHandler.text);
+                    ConnectHTTPServerInfo serverInfo = JsonUtility.FromJson<ConnectHTTPServerInfo>(
+                        webRequest.downloadHandler.text);
                     gameCtrl.connectToServer(serverInfo);
                     
                     break;

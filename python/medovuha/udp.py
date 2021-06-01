@@ -9,7 +9,7 @@ from loguru import logger
 from pydantic import BaseModel, ValidationError, validator
 
 from medovuha.injector import inject, register
-from medovuha.state import GameState
+from medovuha.state import GameState, GameStage
 
 
 class UdpProtocol(asyncio.DatagramProtocol):
@@ -84,7 +84,7 @@ class UdpSocket:
 
 class JsonRpcRequest(BaseModel):
     method: str
-    params: dict
+    parameters: dict
     jsonrpc: str = "2.0"
     id: Optional[str] = None
 
@@ -125,7 +125,7 @@ class UdpServer(ServiceMixin):
             logger.debug("Received from {}: {}", address, data)
             try:
                 request = JsonRpcRequest.parse_raw(data)
-                base_params = BaseParams.parse_obj(request.params)
+                base_params = BaseParams.parse_obj(request.parameters)
             except ValidationError:
                 logger.exception("Bad request")
                 continue
@@ -133,7 +133,12 @@ class UdpServer(ServiceMixin):
                 logger.info("Game with id {} do not exist", base_params.game_id)
                 continue  # TODO: response with "no such game"
             self.players_address[base_params.player_id] = address
-            self.games[base_params.game_id].dispatch(request.method, request.params)
+            self.games[base_params.game_id].dispatch(request.method, request.parameters)
+
+            # TODO: Change it later
+            if len(self.games[base_params.game_id].players) == 2:
+                self.games[base_params.game_id].stage = GameStage.running
+            
             # TODO: add response maybe
 
     async def send_state(self):
@@ -145,8 +150,8 @@ class UdpServer(ServiceMixin):
                 now += need_to_sleep
             self.last_tick_start = now
             for state in self.games.values():
-                rpc_request = JsonRpcRequest(method="update_state", params=jsonable_encoder(state))
-                data = rpc_request.json()
+                rpc_request = JsonRpcRequest(method="update_state", parameters=jsonable_encoder(state))
+                data = rpc_request.json().encode()
                 for player in state.players.values():
                     address = self.players_address.get(player.player_id)
                     if not address:
