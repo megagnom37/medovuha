@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any
 from facet import ServiceMixin
 from fastapi.encoders import jsonable_encoder
 from loguru import logger
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel, ValidationError
 
 from medovuha.injector import inject, register
 from medovuha.state import GameState, GameStage
@@ -85,14 +85,7 @@ class UdpSocket:
 class JsonRpcRequest(BaseModel):
     method: str
     parameters: dict
-    jsonrpc: str = "2.0"
     id: Optional[str] = None
-
-    @validator("jsonrpc")
-    def version_match(cls, v):
-        if v != "2.0":
-            raise ValidationError(f"Json rpc version must be '2.0', got {v}")
-        return v
 
 
 class BaseParams(BaseModel):
@@ -102,7 +95,9 @@ class BaseParams(BaseModel):
 
 class UdpServer(ServiceMixin):
 
-    def __init__(self, host, port, tickrate):
+    def __init__(self, advertise_host, advertise_port, host, port, tickrate):
+        self.advertise_host = advertise_host
+        self.advertise_port = advertise_port
         self.host = host
         self.port = port
         self.tick_interval = 1 / tickrate
@@ -138,7 +133,7 @@ class UdpServer(ServiceMixin):
             # TODO: Change it later
             if len(self.games[base_params.game_id].players) == 2:
                 self.games[base_params.game_id].stage = GameStage.running
-            
+
             # TODO: add response maybe
 
     async def send_state(self):
@@ -151,7 +146,7 @@ class UdpServer(ServiceMixin):
             self.last_tick_start = now
             for state in self.games.values():
                 rpc_request = JsonRpcRequest(method="update_state", parameters=jsonable_encoder(state))
-                data = rpc_request.json().encode()
+                data = rpc_request.json().encode("utf-8")
                 for player in state.players.values():
                     address = self.players_address.get(player.player_id)
                     if not address:
@@ -159,7 +154,7 @@ class UdpServer(ServiceMixin):
                     await self.socket.send(data, address)
 
     def create_game(self) -> GameState:
-        state = GameState.from_address(self.host, self.port)
+        state = GameState.from_address(self.advertise_host, self.advertise_port)
         self.games[state.info.game_id] = state
         return state
 
@@ -168,7 +163,9 @@ class UdpServer(ServiceMixin):
 @inject
 def udp_server_from_config(config):
     return UdpServer(
-        host=config["udp_host"],
-        port=config["udp_port"],
-        tickrate=config["udp_tickrate"],
+        advertise_host=config.udp_advertise_host,
+        advertise_port=config.udp_advertise_port,
+        host=config.udp_host,
+        port=config.udp_port,
+        tickrate=config.udp_tickrate,
     )

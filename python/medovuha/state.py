@@ -65,6 +65,6 @@ class GameState(BaseModel):
         return getattr(self, method)(parsed_params)
 
     def set_position(self, params: PlayerInfo):
-        if params.player_id not in self.players:
+        if params.player_id not in self.players:  # TODO: replace
             self.players[params.player_id] = params
         self.players[params.player_id].position = params.position

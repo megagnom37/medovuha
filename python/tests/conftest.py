@@ -12,6 +12,8 @@ async def config(unused_tcp_port):
     return Config(
         web_host="localhost",
         web_port=unused_tcp_port,
+        udp_advertise_host="localhost",
+        udp_advertise_port=60_000,  # TODO: make as factory with unused port
         udp_host="localhost",
         udp_port=60_000,  # TODO: make as factory with unused port
         udp_tickrate=32.0,
