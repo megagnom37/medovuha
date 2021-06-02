@@ -117,7 +117,7 @@ class UdpServer(ServiceMixin):
 
     async def listen(self):
         async for data, address in self.socket:
-            logger.debug("Received from {}: {}", address, data)
+            # logger.debug("Received from {}: {}", address, data) TODO: change log level
             try:
                 request = JsonRpcRequest.parse_raw(data)
                 base_params = BaseParams.parse_obj(request.parameters)
@@ -131,10 +131,17 @@ class UdpServer(ServiceMixin):
             self.games[base_params.game_id].dispatch(request.method, request.parameters)
 
             # TODO: Change it later
-            if len(self.games[base_params.game_id].players) == 2:
-                self.games[base_params.game_id].stage = GameStage.running
+            if (len(self.games[base_params.game_id].players) == 2 and 
+                    self.games[base_params.game_id].stage == GameStage.waiting):
+                self.games[base_params.game_id].stage = GameStage.preparing
+                self.add_task(self.start_game(base_params.game_id))
 
             # TODO: add response maybe
+    
+    async def start_game(self, game_id):
+        # Delay for creating enemys
+        await asyncio.sleep(1) # TODO: improve it later
+        self.games[game_id].stage = GameStage.running
 
     async def send_state(self):
         while True:

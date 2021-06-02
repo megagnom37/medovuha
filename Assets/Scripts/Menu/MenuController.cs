@@ -21,7 +21,7 @@ public class MenuController : MonoBehaviour
 
     public void ClickPlayButton()
     {
-        StartCoroutine(GetRequest("http://127.0.0.1:8080/get_game"));
+        StartCoroutine(GetRequest("http://127.0.0.1:80/get_game"));
     }
     IEnumerator GetRequest(string uri)
     {

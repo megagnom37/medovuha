@@ -84,14 +84,13 @@ public class UDPClient : MonoBehaviour
     void updateEnemysData(byte[] data)
     {
         string row_data_str = Encoding.UTF8.GetString(data);
-        ServerRecieveData server_rec_data = JsonUtility.FromJson<ServerRecieveData>(row_data_str);
+
+        ServerRecieveData server_rec_data = new ServerRecieveData();
+        server_rec_data.Deserialize(SimpleJSON.JSON.Parse(row_data_str));
+
         ServerParams server_data = server_rec_data.parameters;
         
         server_status = server_data.stage;
-
-        print(server_data.info.game_id);
-        print(server_data.info.host);
-        print(server_data.info.port);
 
         foreach (KeyValuePair<string, PlayerData> enemy_info in server_data.players)
         {
@@ -103,18 +102,6 @@ public class UDPClient : MonoBehaviour
                                                                   enemy_info.Value.position.y,
                                                                   enemy_info.Value.position.z);
         }
-
-        if (server_status == "waiting")
-        {
-            foreach (KeyValuePair<string, Vector3> enemy_info in enemys_data)
-            {
-                if (!enemys.ContainsKey(enemy_info.Key))
-                {
-                    GameObject enemy_object = Instantiate(enemy_prefab, enemy_info.Value, Quaternion.identity);
-                    enemys[enemy_info.Key] = enemy_object.GetComponent<Enemy>();
-                }
-            }
-        }
     }
 
     void updateEnemys()
@@ -124,6 +111,17 @@ public class UDPClient : MonoBehaviour
             foreach (KeyValuePair<string, Enemy> enemy in enemys)
             {
                 enemy.Value.Move(enemys_data[enemy.Key]);
+            }
+        }
+        else if ((server_status == "waiting") || (server_status == "preparing"))
+        {
+            foreach (KeyValuePair<string, Vector3> enemy_info in enemys_data)
+            {
+                if (!enemys.ContainsKey(enemy_info.Key))
+                {
+                    GameObject enemy_object = Instantiate(enemy_prefab, enemy_info.Value, Quaternion.identity);
+                    enemys[enemy_info.Key] = enemy_object.GetComponent<Enemy>();
+                }
             }
         }
     }

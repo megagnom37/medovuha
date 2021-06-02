@@ -17,7 +17,7 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
-        
+        playerID = System.Guid.NewGuid().ToString();
     }
 
     void Update()

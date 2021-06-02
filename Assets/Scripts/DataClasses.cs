@@ -10,6 +10,13 @@ public class Position
     public float y;
     public float z;
 
+    public void Deserialize(SimpleJSON.JSONNode aNode)
+    {
+        x = aNode["x"];
+        y = aNode["y"];
+        z = aNode["z"];
+    }
+
     public Position(){}
 
     public Position(float x, float y, float z)
@@ -62,6 +69,15 @@ public class PlayerData
     public string player_name;
     public Position position;
 
+    public void Deserialize(SimpleJSON.JSONNode aNode)
+    {
+        player_id = aNode["player_id"];
+        player_name = aNode["player_name"];
+
+        position = new Position();
+        position.Deserialize(aNode["position"]);
+    }
+
     public PlayerData(){}
 
     public PlayerData(string player_name, string player_id, Position position) 
@@ -77,6 +93,14 @@ public class ServerRecieveData
 {
     public string method;
     public ServerParams parameters;
+
+    public void Deserialize(SimpleJSON.JSONNode aNode)
+    {
+        method = aNode["method"];
+
+        parameters = new ServerParams();
+        parameters.Deserialize(aNode["parameters"]);
+    }
 
     public ServerRecieveData() { }
 
@@ -94,6 +118,21 @@ public class ServerParams
     public string stage;
     public ConnectHTTPServerInfo info;
     public Dictionary<string, PlayerData> players;
+
+    public void Deserialize(SimpleJSON.JSONNode aNode)
+    {
+        stage = aNode["stage"];
+
+        info = new ConnectHTTPServerInfo();
+        info.Deserialize(aNode["info"]);
+
+        players = new Dictionary<string, PlayerData>();
+        foreach (var v in aNode["players"])
+        {
+            players[v.Key] = new PlayerData();
+            players[v.Key].Deserialize(v.Value);
+        }    
+    }
 
     public ServerParams() {}
 
@@ -126,6 +165,13 @@ public class ConnectHTTPServerInfo
     public string game_id;
     public string host;
     public int port;
+
+    public void Deserialize(SimpleJSON.JSONNode aNode)
+    {
+        game_id = aNode["game_id"];
+        host = aNode["host"];
+        port = aNode["port"];
+    }
 
     public ConnectHTTPServerInfo(){}
 

@@ -22,6 +22,7 @@ class PlayerInfo(BaseModel):
 
 class GameStage(Enum):
     waiting = "waiting"
+    preparing = "preparing"
     running = "running"
     stopped = "stopped"
 
