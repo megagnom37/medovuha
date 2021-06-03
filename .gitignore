@@ -61,3 +61,6 @@ crashlytics-build.properties
 .python-version
 *.egg-info
 *.pyc
+.vscode
+.vsconfig
+.coverage

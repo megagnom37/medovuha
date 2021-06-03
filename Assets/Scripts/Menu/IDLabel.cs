@@ -10,10 +10,6 @@ public class IDLabel : MonoBehaviour
     void Start()
     {
         id_text = GetComponent<Text>();
-    }
-
-    public void ChangedID(string text)
-    {
-        FindObjectOfType<GameController>().playerID = int.Parse(id_text.text);
+        id_text.text = FindObjectOfType<GameController>().playerID;
     }
 }

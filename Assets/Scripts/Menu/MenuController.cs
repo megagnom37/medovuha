@@ -21,13 +21,13 @@ public class MenuController : MonoBehaviour
 
     public void ClickPlayButton()
     {
-        StartCoroutine(PostRequest("http://127.0.0.1:8080/server_connector/connect"));
+        StartCoroutine(GetRequest("http://127.0.0.1:80/get_game"));
     }
-    IEnumerator PostRequest(string uri)
+    IEnumerator GetRequest(string uri)
     {
-        ConnectHTTPPlayerInfo postData = new ConnectHTTPPlayerInfo(gameCtrl.playerID);
+        //ConnectHTTPPlayerInfo postData = new ConnectHTTPPlayerInfo(gameCtrl.playerID);
 
-        using (UnityWebRequest webRequest = UnityWebRequest.Post(uri, JsonUtility.ToJson(postData)))
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
         {
             yield return webRequest.SendWebRequest();
 

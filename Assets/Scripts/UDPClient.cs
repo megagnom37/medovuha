@@ -10,15 +10,15 @@ using System.Threading;
 
 public class UDPClient : MonoBehaviour
 {
-    private int game_id;
+    private string game_id;
     private string host;
     private int port;
-    private int player_id;
+    private string player_id;
 
     private string server_status;
 
-    private Dictionary<int, Enemy> enemys;
-    private Dictionary<int, Vector3> enemys_data;
+    private Dictionary<string, Enemy> enemys;
+    private Dictionary<string, Vector3> enemys_data;
 
     private Thread receive_thread;
     private IPEndPoint remote_end_point;
@@ -29,8 +29,8 @@ public class UDPClient : MonoBehaviour
 
     void Start()
     {
-        enemys_data = new Dictionary<int, Vector3>();
-        enemys = new Dictionary<int, Enemy>();
+        enemys_data = new Dictionary<string, Vector3>();
+        enemys = new Dictionary<string, Enemy>();
 
         server_status = "waiting";
 
@@ -41,6 +41,7 @@ public class UDPClient : MonoBehaviour
     private void Update()
     {
         SendPlayerInfo();
+        checkAndCreateEnemy();
         updateEnemys();
     }
 
@@ -84,30 +85,23 @@ public class UDPClient : MonoBehaviour
     void updateEnemysData(byte[] data)
     {
         string row_data_str = Encoding.UTF8.GetString(data);
-        ServerData server_data = JsonUtility.FromJson<ServerData>(row_data_str);
-        server_status = server_data.status;
 
-        foreach (var enemy_info in server_data.enemys)
+        ServerRecieveData server_rec_data = new ServerRecieveData();
+        server_rec_data.Deserialize(SimpleJSON.JSON.Parse(row_data_str));
+
+        ServerParams server_data = server_rec_data.parameters;
+        
+        server_status = server_data.stage;
+
+        foreach (KeyValuePair<string, PlayerData> enemy_info in server_data.players)
         {
-            if (enemy_info.enemy_id == player_id)
+            if (enemy_info.Value.player_id == player_id)
             {
                 continue;
             }
-            enemys_data[enemy_info.enemy_id] = new Vector3(enemy_info.position.x,
-                                                           enemy_info.position.y,
-                                                           enemy_info.position.z);
-        }
-
-        if (server_status == "waiting")
-        {
-            foreach (KeyValuePair<int, Vector3> enemy_info in enemys_data)
-            {
-                if (!enemys.ContainsKey(enemy_info.Key))
-                {
-                    GameObject enemy_object = Instantiate(enemy_prefab, enemy_info.Value, Quaternion.identity);
-                    enemys[enemy_info.Key] = enemy_object.GetComponent<Enemy>();
-                }
-            }
+            enemys_data[enemy_info.Value.player_id] = new Vector3(enemy_info.Value.position.x,
+                                                                  enemy_info.Value.position.y,
+                                                                  enemy_info.Value.position.z);
         }
     }
 
@@ -115,9 +109,21 @@ public class UDPClient : MonoBehaviour
     {
         if (server_status == "running")
         {
-            foreach (KeyValuePair<int, Enemy> enemy in enemys)
+            foreach (KeyValuePair<string, Enemy> enemy in enemys)
             {
                 enemy.Value.Move(enemys_data[enemy.Key]);
+            }
+        }
+    }
+
+    void checkAndCreateEnemy()
+    {
+        foreach (KeyValuePair<string, Vector3> enemy_info in enemys_data)
+        {
+            if (!enemys.ContainsKey(enemy_info.Key))
+            {
+                GameObject enemy_object = Instantiate(enemy_prefab, enemy_info.Value, Quaternion.identity);
+                enemys[enemy_info.Key] = enemy_object.GetComponent<Enemy>();
             }
         }
     }
@@ -125,9 +131,12 @@ public class UDPClient : MonoBehaviour
     void SendPlayerInfo()
     {
         Vector3 pos = player.transform.position;
-        PlayerData player_data = new PlayerData(
-            game_id, player_id, new Position(pos.x, pos.y, pos.z));
-        byte[] bytes_to_send = Encoding.UTF8.GetBytes(JsonUtility.ToJson(player_data));
+        ClientParams client_params = new ClientParams(
+            game_id, player_id, "test_name", new Position(pos.x, pos.y, pos.z));
+
+        ClientSendData client_send_data = new ClientSendData("set_position", client_params);
+
+        byte[] bytes_to_send = Encoding.UTF8.GetBytes(JsonUtility.ToJson(client_send_data));
 
         try
         {
