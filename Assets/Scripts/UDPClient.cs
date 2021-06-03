@@ -41,6 +41,7 @@ public class UDPClient : MonoBehaviour
     private void Update()
     {
         SendPlayerInfo();
+        checkAndCreateEnemy();
         updateEnemys();
     }
 
@@ -113,15 +114,16 @@ public class UDPClient : MonoBehaviour
                 enemy.Value.Move(enemys_data[enemy.Key]);
             }
         }
-        else if ((server_status == "waiting") || (server_status == "preparing"))
+    }
+
+    void checkAndCreateEnemy()
+    {
+        foreach (KeyValuePair<string, Vector3> enemy_info in enemys_data)
         {
-            foreach (KeyValuePair<string, Vector3> enemy_info in enemys_data)
+            if (!enemys.ContainsKey(enemy_info.Key))
             {
-                if (!enemys.ContainsKey(enemy_info.Key))
-                {
-                    GameObject enemy_object = Instantiate(enemy_prefab, enemy_info.Value, Quaternion.identity);
-                    enemys[enemy_info.Key] = enemy_object.GetComponent<Enemy>();
-                }
+                GameObject enemy_object = Instantiate(enemy_prefab, enemy_info.Value, Quaternion.identity);
+                enemys[enemy_info.Key] = enemy_object.GetComponent<Enemy>();
             }
         }
     }

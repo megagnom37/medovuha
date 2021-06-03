@@ -13,11 +13,12 @@ public class GameController : MonoBehaviour
     void Awake()
     {
         DontDestroyOnLoad(transform.gameObject);
+        playerID = System.Guid.NewGuid().ToString();
     }
 
     void Start()
     {
-        playerID = System.Guid.NewGuid().ToString();
+        
     }
 
     void Update()

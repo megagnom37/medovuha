@@ -131,17 +131,11 @@ class UdpServer(ServiceMixin):
             self.games[base_params.game_id].dispatch(request.method, request.parameters)
 
             # TODO: Change it later
-            if (len(self.games[base_params.game_id].players) == 2 and 
-                    self.games[base_params.game_id].stage == GameStage.waiting):
-                self.games[base_params.game_id].stage = GameStage.preparing
-                self.add_task(self.start_game(base_params.game_id))
+            if (self.games[base_params.game_id].stage == GameStage.waiting and
+                len(self.games[base_params.game_id].players) == 2):
+                self.games[base_params.game_id].stage = GameStage.running
 
             # TODO: add response maybe
-    
-    async def start_game(self, game_id):
-        # Delay for creating enemys
-        await asyncio.sleep(1) # TODO: improve it later
-        self.games[game_id].stage = GameStage.running
 
     async def send_state(self):
         while True:
